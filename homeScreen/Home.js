@@ -5,7 +5,6 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
-  ScrollView,
   FlatList,
   Modal,
   Alert,
@@ -14,13 +13,10 @@ import {
 } from "react-native";
 import React, { useState, useEffect, useId } from "react";
 import Feather from "react-native-vector-icons/Feather";
-import AntDesign from "react-native-vector-icons/AntDesign";
-import Ionic from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import Item from "./item/Item";
-import axios from "axios";
 
 const Home = ({ navigation }) => {
   const [isLoading, setisLoading] = useState(false);
@@ -29,7 +25,7 @@ const Home = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [userInfo, setUserInfo] = useState({});
   const [posts, setPosts] = useState([]);
-  let urlPost = "http://10.24.57.87:3000/posts";
+  let urlPost = "http://192.168.1.10:3000/posts";
 
   /// Loading UserInfo
   useEffect(() => {
@@ -58,8 +54,6 @@ const Home = ({ navigation }) => {
         height: 400,
         cropping: true,
         includeBase64: true,
-        cropperCircleOverlay: true,
-        allowsEditing: true,
       });
       if (!image.canceled) {
         let _uri = image.assets[0].uri;
@@ -180,8 +174,27 @@ const Home = ({ navigation }) => {
           >
             <View style={styles.centeredView}>
               <View style={styles.modalView}>
+                {/* NÚT ẨN MODAL */}
+                <View style={{ marginLeft: 260 }}>
+                  <TouchableOpacity
+                    style={{
+                      borderRadius: 20,
+                      padding: 5,
+                    }}
+                    onPress={() => [setModalVisible(false)]}
+                  >
+                    <Text style={styles.textStyle}>X</Text>
+                  </TouchableOpacity>
+                </View>
                 <TextInput
-                  style={{ color: "black", textAlign: "center" }}
+                  style={{
+                    color: "black",
+                    textAlign: "center",
+                    borderWidth: 0.5,
+                    padding: 10,
+                    borderRadius: 10,
+                    marginBottom: 10,
+                  }}
                   placeholder="Bạn đang nghĩ gì ?"
                   onChangeText={setContent}
                 ></TextInput>
@@ -192,7 +205,11 @@ const Home = ({ navigation }) => {
                     <View style={{ width: 320, height: 200 }}>
                       <Image
                         source={{ uri: selectImage }}
-                        style={{ width: "100%", height: "100%" }}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 10,
+                        }}
                       />
                     </View>
                   ) : (
@@ -208,29 +225,18 @@ const Home = ({ navigation }) => {
                   )}
                 </TouchableOpacity>
                 {/* NÚT POST */}
-                <TouchableOpacity
-                  style={[styles.button, styles.buttonClose]}
-                  onPress={() => [
-                    uploadNewPost(),
-                    setSelectImage(""),
-                    // setModalVisible(false),
-                  ]}
-                >
-                  <Text style={styles.textStyle}>Post</Text>
-                </TouchableOpacity>
-                {/* NÚT ẨN MODAL */}
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: "gray",
-                    marginTop: 20,
-                    borderRadius: 20,
-                    padding: 10,
-                    elevation: 0,
-                  }}
-                  onPress={() => [setModalVisible(false)]}
-                >
-                  <Text style={styles.textStyle}>Cancel</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: "row" }}>
+                  <TouchableOpacity
+                    style={[styles.button, styles.buttonClose]}
+                    onPress={() => [
+                      uploadNewPost(),
+                      setSelectImage(""),
+                      // setModalVisible(false),
+                    ]}
+                  >
+                    <Text style={styles.textStyle}>Post</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </Modal>
@@ -278,12 +284,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 22,
   },
   modalView: {
-    margin: 20,
     backgroundColor: "white",
-    borderRadius: 20,
+    borderRadius: 10,
     padding: 35,
     alignItems: "center",
     shadowColor: "#000",
@@ -309,7 +313,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E66C2C",
   },
   textStyle: {
-    color: "white",
+    color: "black",
     fontWeight: "bold",
     textAlign: "center",
   },

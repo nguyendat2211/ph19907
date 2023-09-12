@@ -15,7 +15,7 @@ const Friend = () => {
   const [follower, setfollower] = useState([]);
   const postPersonImage = require("../assets/profile-icon.png");
   const isFocused = useIsFocused();
-  const url = "http://10.24.57.87:3000/follow";
+  const url = "http://192.168.1.10:3000/follow";
 
   const getFollowers = async () => {
     try {

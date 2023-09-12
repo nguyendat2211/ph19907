@@ -5,6 +5,8 @@ import Friends from "./homeScreen/Friend";
 import Notifi from "./homeScreen/Notifi";
 import Profile from "./homeScreen/Profile";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
+
+
 const Tab = createBottomTabNavigator();
 const TabNav = () => {
   return (

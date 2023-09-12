@@ -9,13 +9,68 @@ import {
   Modal,
   TextInput,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Feather from "react-native-vector-icons/Feather";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import Ionic from "react-native-vector-icons/Ionicons";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Profile = ({ navigation }) => {
+  const [userInfo, setUserInfo] = useState({});
   const [modalVisible, setmodalVisible] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [newFullname, setnewFullname] = useState("");
+
+  //GET user đăng nhập
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      getUserInfo();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  const getUserInfo = async () => {
+    try {
+      const value = await AsyncStorage.getItem("loginInfo");
+      if (value !== null) {
+        setUserInfo(JSON.parse(value));
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      alert("New password and confirm password must match!");
+      return;
+    }
+
+    try {
+      const updatedUserInfo = {
+        ...userInfo, // Copy all other user info (optional, remove this if you don't need to send the whole user info)
+        password: newPassword,
+        fullname: newFullname,
+      };
+
+      const url = `http://192.168.1.10:3000/users/${userInfo.id}`;
+
+      // Send the updated user info with the new password
+      const response = await axios.put(url, updatedUserInfo);
+      alert("Password changed successfully!");
+      console.log(response.data);
+
+      setmodalVisible(false);
+      navigation.navigate("Login");
+    } catch (error) {
+      // Handle error here
+      console.error("Error updating password:", error);
+      alert("Failed to update password. Please try again.");
+    }
+  };
+
+  // Logout
   const handleLogout = () => {
     navigation.navigate("Login");
   };
@@ -27,7 +82,7 @@ const Profile = ({ navigation }) => {
         source={require("../assets/avatar.jpg")} // Đường dẫn đến ảnh đại diện
       />
       <Text style={{ fontSize: 24, fontWeight: "bold", marginTop: 10 }}>
-        Nguyễn Đạt
+        {userInfo.fullname}
       </Text>
       <View style={{ width: "80%", marginTop: 30 }}>
         <View style={{ flexDirection: "column" }}>
@@ -62,6 +117,7 @@ const Profile = ({ navigation }) => {
                 </Text>
                 <Text style={{ fontSize: 16, margin: 15 }}>New Password</Text>
                 <TextInput
+                  onChangeText={setNewPassword}
                   placeholder="Enter new password"
                   style={{
                     fontSize: 18,
@@ -75,6 +131,7 @@ const Profile = ({ navigation }) => {
                   Confirm Password
                 </Text>
                 <TextInput
+                  onChangeText={setConfirmPassword}
                   placeholder="Enter confirm password"
                   style={{
                     fontSize: 18,
@@ -84,16 +141,24 @@ const Profile = ({ navigation }) => {
                     padding: 10,
                   }}
                 />
-
-                <View
+                <Text style={{ fontSize: 16, margin: 15 }}>New name</Text>
+                <TextInput
+                  onChangeText={setnewFullname}
+                  placeholder="Enter new fullname"
                   style={{
-                    flexDirection: "row",
+                    fontSize: 18,
+                    borderWidth: 0.7,
+                    borderRadius: 10,
+                    height: 50,
+                    padding: 10,
                   }}
-                >
+                />
+
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <TouchableOpacity onPress={() => setmodalVisible(false)}>
                     <Text style={styles.buttonAmen}>Cancel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setmodalVisible(false)}>
+                  <TouchableOpacity onPress={() => handleChangePassword()}>
                     <Text style={styles.buttonAmen}>Save</Text>
                   </TouchableOpacity>
                 </View>
@@ -135,17 +200,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#f7f7f7",
   },
   centeredView: {
-    alignItems: "flex-end",
+    alignItems: "center",
     flex: 1,
     justifyContent: "center",
     flexDirection: "row",
   },
   modalView: {
+    padding: 20,
     marginBottom: 60,
     height: "50%",
     backgroundColor: "white",
     borderRadius: 20,
-    padding: 30,
     width: 300,
   },
   buttonAmen: {
@@ -158,6 +223,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: "#bcbdbf",
     width: 100,
-    marginLeft: 40,
+    marginLeft: 20,
   },
 });

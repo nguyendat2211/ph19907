@@ -16,6 +16,9 @@ import AntDesign from "react-native-vector-icons/AntDesign";
 import Ionic from "react-native-vector-icons/Ionicons";
 import axios from "axios";
 import { useIsFocused } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+const API_BASE_URL = "http://192.168.1.10:3000";
 
 const Item = (props) => {
   const postPersonImage = require("../../assets/profile-icon.png");
@@ -31,7 +34,86 @@ const Item = (props) => {
   const [followId, setFollowId] = useState();
   const [curFollow, setCurFollow] = useState();
   const isFocused = useIsFocused();
+  const [showEditOptions, setShowEditOptions] = useState(false);
+  const [editPost, setEditPost] = useState("");
+  const [selectImage, setSelectImage] = useState("");
+  const [selectedItemId, setSelectedItemId] = useState(null);
 
+  // Hàm để hiển thị/nấp đi nút ba chấm
+  const toggleEditOptions = (itemId) => {
+    setShowEditOptions(!showEditOptions);
+    setSelectedItemId(itemId);
+  };
+  // Image
+  const pickImage = async () => {
+    try {
+      const image = await ImagePicker.launchImageLibraryAsync({
+        width: 300,
+        height: 400,
+        cropping: true,
+        includeBase64: true,
+      });
+      if (!image.canceled) {
+        let _uri = image.assets[0].uri;
+        let file_ext = _uri.substring(_uri.lastIndexOf(".") + 1);
+
+        FileSystem.readAsStringAsync(image.assets[0].uri, {
+          encoding: "base64",
+        }).then((res) => {
+          setSelectImage("data:image/" + file_ext + ";base64," + res);
+        });
+      } else {
+        console.log("Image picker was canceled.");
+      }
+    } catch (error) {
+      console.log("Error selecting image:", error);
+    }
+  };
+  //Update post
+  const updatePostById = async () => {
+    try {
+      const urlPost = API_BASE_URL + "/posts/" + selectedItemId;
+
+      const updatedPost = {
+        postContent: editPost,
+        postImage: selectImage,
+        profileName: props.inputData.profileName,
+      };
+
+      const response = await axios.put(urlPost, updatedPost);
+
+      if (response.status === 200) {
+        Alert.alert("Thông báo!", "Bài viết đã được cập nhật!");
+        setEditPost("");
+        setSelectImage("");
+        setShowEditOptions(false);
+        loadData();
+      } else {
+        Alert.alert("Cập nhật không thành công!");
+        console.log(response.status);
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật bài viết:", error);
+    }
+  };
+  //Delete Post
+  const DeleteById = async () => {
+    try {
+      const urlPost = API_BASE_URL + "/posts/" + selectedItemId;
+      const response = await axios.delete(urlPost);
+
+      if (response.status === 200) {
+        Alert.alert("Thông báo!", "Delete success");
+        setShowEditOptions(false);
+        loadData();
+      } else {
+        Alert.alert("Delete failed!");
+        console.log(response.status);
+      }
+    } catch (error) {
+      console.error("Lỗi: ", error);
+    }
+  };
   useEffect(() => {
     loadData();
   }, [isFocused]);
@@ -40,7 +122,7 @@ const Item = (props) => {
   const getComments = async () => {
     try {
       const response = await axios.get(
-        "http://192.168.0.179:3000/comments?postId=" +
+        "http://192.168.1.10:3000/comments?postId=" +
           props.inputData.id +
           "&expand=users"
       );
@@ -58,11 +140,12 @@ const Item = (props) => {
         commentContent: comment,
       };
       try {
-        let urlComment = "http://192.168.0.179:3000/comments";
+        let urlComment = API_BASE_URL + "/comments";
         const response = await axios.post(urlComment, newComment);
 
         if (response.status === 201) {
           Alert.alert("Thông báo!", "Đã thêm bình luận!");
+          setcomment("");
           loadData();
         } else {
           Alert.alert("Thêm không thành công!");
@@ -80,7 +163,7 @@ const Item = (props) => {
       profileId: profileId,
     };
     try {
-      let urlLikes = "http://192.168.0.179:3000/likes";
+      let urlLikes = API_BASE_URL + "/likes";
       await axios.post(urlLikes, newLikes);
       loadData();
       console.log("Đã like 1 " + props.userInfo.fullname);
@@ -97,7 +180,7 @@ const Item = (props) => {
         return;
       }
 
-      let urlLike = "http://192.168.0.179:3000/likes/" + likeId;
+      let urlLike = API_BASE_URL + "/likes/" + likeId;
       const response = await axios.delete(urlLike);
 
       if (response.status === 200) {
@@ -127,8 +210,7 @@ const Item = (props) => {
   // xem đã like hay chưa
   const getLike = async () => {
     try {
-      let urlLike =
-        "http://192.168.0.179:3000/likes?postId=" + props.inputData.id;
+      let urlLike = API_BASE_URL + "/likes?postId=" + props.inputData.id;
       const response = await axios.get(urlLike);
       setlikes(response.data);
     } catch (error) {
@@ -138,11 +220,11 @@ const Item = (props) => {
 
   const handleFollow = async () => {
     try {
-      const urlFollow = "http://10.24.57.87:3000/follow"; // Your API endpoint for follow/unfollow
+      const urlFollow = API_BASE_URL + "/follow";
 
       const followData = {
-        userId: props.inputData.id, // ID of the user you want to follow/unfollow
-        followerId: props.userInfo.id, // ID of the current logged-in user
+        userId: props.inputData.id,
+        followerId: props.userInfo.id,
         username: props.userInfo.fullname,
       };
       await axios.post(urlFollow, followData);
@@ -150,30 +232,6 @@ const Item = (props) => {
       getIsFollow();
     } catch (error) {
       console.error("Error following/unfollowing:", error);
-    }
-  };
-
-  const unFollow = async () => {
-    try {
-      // Kiểm tra xem likeId có tồn tại và không phải null/undefined
-      if (!followId) {
-        console.log("followId không hợp lệ!");
-        return;
-      }
-
-      let urlFollow = "http://10.24.57.87:3000/follow/" + followId;
-      const response = await axios.delete(urlFollow);
-
-      if (response.status === 200) {
-        // Xoá thành công
-        console.log("Unfollow thành công");
-        setisfollow(false); // Cập nhật trạng thái isLike
-        loadData(); // Load lại dữ liệu
-      } else {
-        console.log("Unfollow không thành công");
-      }
-    } catch (error) {
-      console.log("Unfollow bi loi " + error);
     }
   };
 
@@ -190,8 +248,7 @@ const Item = (props) => {
   // xem đã like hay chưa
   const getFollow = async () => {
     try {
-      let urlLike =
-        "http://10.24.57.87:3000/follow?userId=" + props.inputData.id;
+      let urlLike = API_BASE_URL + "/follow?userId=" + props.inputData.id;
       const response = await axios.get(urlLike);
       setfollow(response.data);
     } catch (error) {
@@ -239,8 +296,7 @@ const Item = (props) => {
           {/* NÚT FOLLOW */}
 
           <View>
-            {props.userInfo.role === 0 && !isfollow && (
-              // Only show the icon if userInfo.role is 0 and isFollowing is false
+            {props.userInfo.role === 0 && !isfollow ? (
               <TouchableOpacity onPress={handleFollow}>
                 <Feather
                   name="user-plus"
@@ -251,21 +307,135 @@ const Item = (props) => {
                   }}
                 />
               </TouchableOpacity>
-            )}
-            {props.userInfo.role === 0 && isfollow && (
-              // Show the unfollow button when isFollowing is true
-              <TouchableOpacity onPress={unFollow}>
+            ) : props.userInfo.role === 1 ? (
+              <TouchableOpacity
+                onPress={() => {
+                  toggleEditOptions(props.inputData.id);
+                }}
+              >
                 <Feather
-                  name="user-minus"
-                  style={{
-                    paddingRight: 10,
-                    fontSize: 20,
-                    color: "red",
-                  }}
+                  name="more-vertical"
+                  style={{ fontSize: 20, color: "black" }}
                 />
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
+
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={showEditOptions}
+            onRequestClose={() => setShowEditOptions(!showEditOptions)}
+          >
+            <View style={styles.centeredView}>
+              <View style={styles.editModal}>
+                <View style={{ alignItems: "center" }}>
+                  <Text
+                    style={{
+                      color: "black",
+                      fontSize: 15,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Update new posts
+                  </Text>
+                </View>
+                <TextInput
+                  style={{
+                    borderRadius: 20,
+                    marginTop: 20,
+                    marginBottom: 20,
+                    padding: 15,
+                    borderWidth: 1,
+                    borderColor: "gray",
+                  }}
+                  placeholder="Nội dung bài viết mới"
+                  onChangeText={setEditPost}
+                />
+
+                {/* Icon ảnh */}
+                <View style={{ alignItems: "center" }}>
+                  <TouchableOpacity onPress={pickImage}>
+                    {selectImage != "" ? (
+                      <View>
+                        <Image
+                          source={{ uri: selectImage }}
+                          style={{ width: 300, height: 180 }}
+                        />
+                      </View>
+                    ) : (
+                      <View>
+                        <Feather
+                          name={"camera"}
+                          style={{
+                            fontSize: 100,
+                            width: 100,
+                            height: 100,
+                          }}
+                        />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                <View style={{ alignItems: "center", marginTop: 20 }}>
+                  {/* Nút cập nhật */}
+                  <View style={{ flexDirection: "row" }}>
+                    <TouchableOpacity
+                      style={{
+                        borderWidth: 1,
+                        backgroundColor: "black",
+                        borderRadius: 15,
+                        marginTop: 10,
+                      }}
+                      onPress={updatePostById}
+                    >
+                      <Text
+                        style={{
+                          padding: 8,
+                          color: "white",
+                          fontSize: 14,
+                          justifyContent: "center",
+                        }}
+                      >
+                        Update
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={{
+                        borderWidth: 1,
+                        backgroundColor: "black",
+                        borderRadius: 15,
+                        marginTop: 10,
+                        marginLeft: 20,
+                      }}
+                      onPress={DeleteById}
+                    >
+                      <Text
+                        style={{
+                          padding: 8,
+                          color: "white",
+                          fontSize: 14,
+                          justifyContent: "center",
+                        }}
+                      >
+                        Delete
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  {/* Nút đóng */}
+                  <TouchableOpacity onPress={() => setShowEditOptions(false)}>
+                    <Text
+                      style={{ color: "blue", paddingTop: 10, fontSize: 14 }}
+                    >
+                      Đóng
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+          {/* Hết nút edit */}
         </View>
         {/* HIỂN THỊ ẢNH ĐÃ ĐĂNG */}
         <View
@@ -448,5 +618,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 30,
     width: 300,
+  },
+  editModal: {
+    marginBottom: 60,
+    height: "55%",
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 30,
+    width: 350,
   },
 });

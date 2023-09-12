@@ -74,7 +74,7 @@ const SignUp = ({ navigation }) => {
         fullname: fullname,
         role: value,
       };
-      let url = "http://192.168.0.179:3000/users?username=" + username;
+      let url = "http://192.168.1.10:3000/users?username=" + username;
       fetch(url)
         .then((res) => {
           return res.json();
@@ -84,7 +84,7 @@ const SignUp = ({ navigation }) => {
             Alert.alert("Thông báo", "Tên đăng nhập đã tồn tại!");
             check = false;
           } else {
-            let urlRegiter = "http://192.168.0.179:3000/users";
+            let urlRegiter = "http://192.168.1.10:3000/users";
             fetch(urlRegiter, {
               method: "POST",
               headers: {

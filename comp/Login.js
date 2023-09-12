@@ -28,7 +28,7 @@ const Login = ({ navigation }) => {
     // kiểm tra thông tin có tồn tài hay không ?
     if (valid) {
       let check = true;
-      let url = "http://10.24.57.87:3000/users?username=" + username;
+      let url = "http://192.168.1.10:3000/users?username=" + username;
       fetch(url)
         .then((res) => {
           return res.json();
@@ -63,35 +63,6 @@ const Login = ({ navigation }) => {
     }
   };
 
-  // const saveCredentials = async (username, password) => {
-  //   try {
-  //     await AsyncStorage.setItem("username", username);
-  //     await AsyncStorage.setItem("password", password);
-  //     console.log("Lưu mật khẩu thành công");
-  //   } catch (error) {
-  //     console.log("Error saving credentials:", error);
-  //   }
-  // };
-  // const checkSavedCredentials = async () => {
-  //   try {
-  //     const savedUsername = await AsyncStorage.getItem("username");
-  //     const savedPassword = await AsyncStorage.getItem("password");
-  //     if (savedUsername && savedPassword) {
-  //       // Tài khoản và mật khẩu đã được lưu, thực hiện đăng nhập tự động
-  //       setUsername(savedUsername);
-  //       setPassword(savedPassword);
-  //       setSelection(true);
-  //       handleLogin();
-  //     }
-  //   } catch (error) {
-  //     console.log("Error retrieving saved credentials:", error);
-  //   }
-  // };
-  // useEffect(() => {
-  //   checkSavedCredentials();
-  //   // navigation.navigate("TabNav");
-  // }, []);
-
   return (
     <View style={styles.container}>
       <Image style={styles.image} source={require("../assets/logo.png")} />
@@ -125,24 +96,9 @@ const Login = ({ navigation }) => {
       <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
         <Text style={{ color: "white" }}>Đăng nhập</Text>
       </TouchableOpacity>
-      <View
-        style={{ flexDirection: "row", marginTop: 10, alignItems: "center" }}
-      >
-        <TouchableOpacity
-          style={styles.checkBox}
-          // onPress={() => setSelection(!isSelected)}
-        >
-          {/* {!isSelected ? (
-            <Text style={{ alignSelf: "center" }}>✔️</Text>
-          ) : (
-            <Text style={{ alignSelf: "center" }}></Text>
-          )} */}
-        </TouchableOpacity>
-        <Text style={{ marginLeft: 10 }}>Lưu mật khẩu</Text>
-      </View>
 
       <View>
-        <Text style={{ fontSize: 15, marginStart: 100, marginTop: 70 }}>
+        <Text style={{ fontSize: 15, marginStart: 100, marginTop: 50 }}>
           Bạn chưa có tài khoản ?
         </Text>
         <TouchableOpacity
